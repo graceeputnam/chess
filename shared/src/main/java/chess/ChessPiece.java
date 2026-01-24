@@ -1,9 +1,6 @@
 package chess;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -22,9 +19,6 @@ public class ChessPiece {
         this.type = type;
     }
 
-    /**
-     * The various different chess piece options
-     */
     public enum PieceType {
         KING,
         QUEEN,
@@ -48,16 +42,10 @@ public class ChessPiece {
         return Objects.hash(teamColor, type);
     }
 
-    /**
-     * @return Which team this chess piece belongs to
-     */
     public ChessGame.TeamColor getTeamColor(){
         return teamColor;
     }
 
-    /**
-     * @return which type of chess piece this piece is
-     */
     public PieceType getPieceType() {
         return type;
     }
