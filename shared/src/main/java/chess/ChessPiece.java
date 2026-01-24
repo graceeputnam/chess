@@ -3,6 +3,7 @@ package chess;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -69,6 +70,27 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        if (board == null || myPosition == null) {
+            return java.util.Collections.emptyList();
+        }
+
+        PieceMovesCalculator calculator;
+
+        //pick the right calculator for each piece
+        if (type == PieceType.KING) {
+            calculator = new KingMovesCalculator(teamColor);
+        } else if (type == PieceType.QUEEN) {
+            calculator = new QueenMovesCalculator(teamColor);
+        } else if (type == PieceType.BISHOP) {
+            calculator = new BishopMovesCalculator(teamColor);
+        } else if (type == PieceType.KNIGHT) {
+            calculator = new KnightMovesCalculator(teamColor);
+        } else if (type == PieceType.ROOK) {
+            calculator = new RookMovesCalculator(teamColor);
+        } else {
+            calculator = new PawnMovesCalculator(teamColor);
+        }
+
+        return calculator.calcMoves(board, myPosition);
     }
-}
+    }
