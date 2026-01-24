@@ -7,13 +7,10 @@ import java.util.List;
 public abstract class PieceMovesCalculator {
 
     protected final ChessGame.TeamColor color;
-
     public PieceMovesCalculator(ChessGame.TeamColor color){
         this.color = color;
     }
-
     public abstract Collection<ChessMove>calcMoves(ChessBoard board, ChessPosition start);
-
     protected boolean onTheBoard(int row, int col){
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
@@ -25,10 +22,8 @@ public abstract class PieceMovesCalculator {
         if (!onTheBoard(newRow, newCol)){
             return;
         }
-
         ChessPosition end = new ChessPosition(newRow, newCol);
         ChessPiece target = board.getPiece(end);
-
         if (target == null || target.getTeamColor() != color){
             moves.add(new ChessMove(start, end, null));
         }
@@ -41,7 +36,6 @@ public abstract class PieceMovesCalculator {
         while (onTheBoard(newRow, newCol)) {
             ChessPosition end = new ChessPosition(newRow, newCol);
             ChessPiece target = board.getPiece(end);
-
             if (target == null) {
                 moves.add(new ChessMove(start, end, null));
             }
@@ -166,7 +160,6 @@ class KnightMovesCalculator extends PieceMovesCalculator {
 
             ChessPosition end = new ChessPosition(newRow, newCol);
             ChessPiece target = board.getPiece(end);
-
             if (target == null || target.getTeamColor() != color) {
                 moves.add(new ChessMove(start, end, null));
             }
