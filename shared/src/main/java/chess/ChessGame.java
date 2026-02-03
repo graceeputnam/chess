@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -10,15 +11,20 @@ import java.util.Collection;
  */
 public class ChessGame {
 
-    public ChessGame() {
+    private TeamColor teamTurn;
+    private ChessBoard board;
 
+    public ChessGame() {
+        board = new ChessBoard();
+        board.resetBoard();
+        teamTurn = TeamColor.WHITE;
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return teamTurn;
     }
 
     /**
@@ -27,7 +33,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        this.teamTurn = team;
     }
 
     /**
@@ -46,7 +52,22 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition);
+        if (piece == null){
+            return null;
+        }
+
+        Collection<ChessMove> pieceMoves = piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> result = new ArrayList<>();
+
+        for (ChessMove move : pieceMoves) {
+            ChessBoard copy = copyBoard(board);
+
+            if (!isInCheckOnBoard(copy, piece.getTeamColor())){
+                result.add(move);
+            }
+        }
+        return result;
     }
 
     /**
@@ -105,6 +126,14 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    private ChessBoard copyBoard(ChessBoard original) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    private boolean isInCheckOnBoard(ChessBoard board, TeamColor teamColor){
         throw new RuntimeException("Not implemented");
     }
 }
