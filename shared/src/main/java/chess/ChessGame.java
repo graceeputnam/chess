@@ -174,7 +174,11 @@ public class ChessGame {
      *
      * @return the chessboard
      */
-    public ChessBoard getBoard(ChessBoard original) {
+    public ChessBoard getBoard() {
+       return board;
+    }
+
+    private ChessBoard copyBoard(ChessBoard original) {
         ChessBoard copy = new ChessBoard();
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
@@ -184,10 +188,6 @@ public class ChessGame {
             }
         }
         return copy;
-    }
-
-    private ChessBoard copyBoard(ChessBoard original) {
-        throw new RuntimeException("Not implemented");
     }
 
     private void applyMove(ChessBoard boardToChange, ChessMove move) {
