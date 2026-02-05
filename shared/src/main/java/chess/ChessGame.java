@@ -174,8 +174,16 @@ public class ChessGame {
      *
      * @return the chessboard
      */
-    public ChessBoard getBoard() {
-       return board;
+    public ChessBoard getBoard(ChessBoard original) {
+        ChessBoard copy = new ChessBoard();
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition pos = new ChessPosition(row, col);
+                ChessPiece piece = original.getPiece(pos);
+                copy.addPiece(pos, piece);
+            }
+        }
+        return copy;
     }
 
     private ChessBoard copyBoard(ChessBoard original) {
