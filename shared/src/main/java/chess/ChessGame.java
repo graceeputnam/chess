@@ -63,7 +63,7 @@ public class ChessGame {
 
         for (ChessMove move : pieceMoves) {
             ChessBoard copy = copyBoard(board);
-
+            applyMove(copy, move);
             if (!isInCheckOnBoard(copy, piece.getTeamColor())){
                 result.add(move);
             }
