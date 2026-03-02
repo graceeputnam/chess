@@ -1,6 +1,6 @@
 package server;
 
-import io.javalin.*;
+import io.javalin.Javalin;
 
 public class Server {
 
@@ -9,8 +9,33 @@ public class Server {
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
-        // Register your endpoints and exception handlers here.
+        // Clear application
+        javalin.delete("/db", ctx -> {
+        });
 
+        // Register
+        javalin.post("/user", ctx -> {
+        });
+
+        // Login
+        javalin.post("/session", ctx -> {
+        });
+
+        // Logout
+        javalin.delete("/session", ctx -> {
+        });
+
+        // List games
+        javalin.get("/game", ctx -> {
+        });
+
+        // Create game
+        javalin.post("/game", ctx -> {
+        });
+
+        // Join game
+        javalin.put("/game", ctx -> {
+        });
     }
 
     public int run(int desiredPort) {
