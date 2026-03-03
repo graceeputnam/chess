@@ -7,29 +7,32 @@ import java.util.List;
 public abstract class PieceMovesCalculator {
 
     protected final ChessGame.TeamColor color;
-    public PieceMovesCalculator(ChessGame.TeamColor color){
+
+    public PieceMovesCalculator(ChessGame.TeamColor color) {
         this.color = color;
     }
-    public abstract Collection<ChessMove>calcMoves(ChessBoard board, ChessPosition start);
-    protected boolean onTheBoard(int row, int col){
+
+    public abstract Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition start);
+
+    protected boolean onTheBoard(int row, int col) {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
-    protected void step(ChessBoard board, ChessPosition start, List<ChessMove> moves, int srow, int scol){
+    protected void step(ChessBoard board, ChessPosition start, List<ChessMove> moves, int srow, int scol) {
         int newRow = start.getRow() + srow;
         int newCol = start.getColumn() + scol;
 
-        if (!onTheBoard(newRow, newCol)){
+        if (!onTheBoard(newRow, newCol)) {
             return;
         }
         ChessPosition end = new ChessPosition(newRow, newCol);
         ChessPiece target = board.getPiece(end);
-        if (target == null || target.getTeamColor() != color){
+        if (target == null || target.getTeamColor() != color) {
             moves.add(new ChessMove(start, end, null));
         }
     }
 
-    protected void slide(ChessBoard board, ChessPosition start, List<ChessMove> moves, int srow, int scol){
+    protected void slide(ChessBoard board, ChessPosition start, List<ChessMove> moves, int srow, int scol) {
         int newRow = start.getRow() + srow;
         int newCol = start.getColumn() + scol;
 
@@ -38,15 +41,14 @@ public abstract class PieceMovesCalculator {
             ChessPiece target = board.getPiece(end);
             if (target == null) {
                 moves.add(new ChessMove(start, end, null));
-            }
-            else{
-                if (target.getTeamColor() != color){
+            } else {
+                if (target.getTeamColor() != color) {
                     moves.add(new ChessMove(start, end, null));
                 }
                 break;
             }
-        newRow += srow;
-        newCol += scol;
+            newRow += srow;
+            newCol += scol;
         }
     }
 }
@@ -60,7 +62,7 @@ class KingMovesCalculator extends PieceMovesCalculator {
     public Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition start) {
         List<ChessMove> moves = new ArrayList<>();
 
-        //all 8 surrounding squares
+        // all 8 surrounding squares
         for (int r = -1; r <= 1; r++) {
             for (int c = -1; c <= 1; c++) {
                 if (r == 0 && c == 0) {
@@ -82,12 +84,12 @@ class QueenMovesCalculator extends PieceMovesCalculator {
     public Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition start) {
         List<ChessMove> moves = new ArrayList<>();
 
-        int[][]dirs = {
+        int[][] dirs = {
                 {1, 0}, {-1, 0}, {0, 1}, {0, -1},
                 {1, 1}, {1, -1}, {-1, 1}, {-1, -1},
         };
 
-        for (int[] d : dirs){
+        for (int[] d : dirs) {
             slide(board, start, moves, d[0], d[1]);
         }
         return moves;
@@ -103,11 +105,11 @@ class RookMovesCalculator extends PieceMovesCalculator {
     public Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition start) {
         List<ChessMove> moves = new ArrayList<>();
 
-        int[][]dirs = {
+        int[][] dirs = {
                 {1, 0}, {-1, 0}, {0, 1}, {0, -1}
         };
 
-        for (int[] d : dirs){
+        for (int[] d : dirs) {
             slide(board, start, moves, d[0], d[1]);
         }
         return moves;
@@ -123,11 +125,11 @@ class BishopMovesCalculator extends PieceMovesCalculator {
     public Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition start) {
         List<ChessMove> moves = new ArrayList<>();
 
-        int[][]dirs = {
+        int[][] dirs = {
                 {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
         };
 
-        for (int[] d : dirs){
+        for (int[] d : dirs) {
             slide(board, start, moves, d[0], d[1]);
         }
         return moves;
@@ -168,7 +170,7 @@ class KnightMovesCalculator extends PieceMovesCalculator {
     }
 }
 
-class PawnMovesCalculator extends PieceMovesCalculator{
+class PawnMovesCalculator extends PieceMovesCalculator {
     public PawnMovesCalculator(ChessGame.TeamColor color) {
         super(color);
     }
@@ -195,44 +197,49 @@ class PawnMovesCalculator extends PieceMovesCalculator{
                 // 2 steps from the start row
                 if (row == startRow) {
                     int twoRow = row + 2 * dir;
-                    if (onTheBoard(twoRow, col)){
+                    if (onTheBoard(twoRow, col)) {
                         ChessPosition twoPos = new ChessPosition(twoRow, col);
                         ChessPiece twoFront = board.getPiece(twoPos);
-                        if (twoFront == null){
+                        if (twoFront == null) {
                             moves.add(new ChessMove(start, twoPos, null));
                         }
                     }
                 }
             }
         }
-        // when the pawn moves diagonal
-        int [] gotCol = {col - 1, col + 1};
-        for (int c : gotCol) {
-            int gotRow = row + dir;
-            if (!onTheBoard(gotRow, c)){
+
+        // diagonal captures
+        int[] possibleCols = {col - 1, col + 1};
+        for (int c : possibleCols) {
+            int captureRow = row + dir;
+            if (!onTheBoard(captureRow, c)) {
                 continue;
             }
-            ChessPosition gotPos = new ChessPosition(gotRow, c);
-            ChessPiece target = board.getPiece(gotPos);
-            if (target != null && target.getTeamColor() != color) {
-                addPawnMoveWithPromotion(start, gotPos, moves, promotionRow);
+            ChessPosition capturePos = new ChessPosition(captureRow, c);
+            ChessPiece target = board.getPiece(capturePos);
+            if (target == null) {
+                continue;
             }
+            if (target.getTeamColor() == color) {
+                continue;
+            }
+
+            addPawnMoveWithPromotion(start, capturePos, moves, promotionRow);
         }
         return moves;
     }
 
-    private void addPawnMoveWithPromotion(ChessPosition start, ChessPosition end, List<ChessMove> moves, int promotionRow){
+    private void addPawnMoveWithPromotion(ChessPosition start, ChessPosition end,
+                                          List<ChessMove> moves, int promotionRow) {
         int endRow = end.getRow();
         // different types of promotion pieces
-        if (endRow == promotionRow){
+        if (endRow == promotionRow) {
             moves.add(new ChessMove(start, end, ChessPiece.PieceType.QUEEN));
             moves.add(new ChessMove(start, end, ChessPiece.PieceType.ROOK));
             moves.add(new ChessMove(start, end, ChessPiece.PieceType.BISHOP));
             moves.add(new ChessMove(start, end, ChessPiece.PieceType.KNIGHT));
-        }
-        else{
+        } else {
             moves.add(new ChessMove(start, end, null));
         }
     }
 }
-
