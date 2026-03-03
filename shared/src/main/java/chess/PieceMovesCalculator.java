@@ -193,18 +193,7 @@ class PawnMovesCalculator extends PieceMovesCalculator {
             ChessPiece front = board.getPiece(onePos);
             if (front == null) {
                 addPawnMoveWithPromotion(start, onePos, moves, promotionRow);
-
-                // 2 steps from the start row
-                if (row == startRow) {
-                    int twoRow = row + 2 * dir;
-                    if (onTheBoard(twoRow, col)) {
-                        ChessPosition twoPos = new ChessPosition(twoRow, col);
-                        ChessPiece twoFront = board.getPiece(twoPos);
-                        if (twoFront == null) {
-                            moves.add(new ChessMove(start, twoPos, null));
-                        }
-                    }
-                }
+                addTwoStepMoveIfPossible(board, start, moves, row, col, dir, startRow);
             }
         }
 
@@ -227,6 +216,24 @@ class PawnMovesCalculator extends PieceMovesCalculator {
             addPawnMoveWithPromotion(start, capturePos, moves, promotionRow);
         }
         return moves;
+    }
+
+    private void addTwoStepMoveIfPossible(ChessBoard board, ChessPosition start, List<ChessMove> moves,
+                                          int row, int col, int dir, int startRow) {
+        if (row != startRow) {
+            return;
+        }
+
+        int twoRow = row + 2 * dir;
+        if (!onTheBoard(twoRow, col)) {
+            return;
+        }
+
+        ChessPosition twoPos = new ChessPosition(twoRow, col);
+        ChessPiece twoFront = board.getPiece(twoPos);
+        if (twoFront == null) {
+            moves.add(new ChessMove(start, twoPos, null));
+        }
     }
 
     private void addPawnMoveWithPromotion(ChessPosition start, ChessPosition end,
