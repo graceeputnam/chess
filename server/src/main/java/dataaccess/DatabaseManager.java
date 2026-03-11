@@ -29,6 +29,15 @@ public class DatabaseManager {
         }
     }
 
+    public static void initializeDatabase() throws DataAccessException {
+        createDatabase();
+        try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword)) {
+            conn.setCatalog(databaseName);
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to initialize database", ex);
+        }
+    }
+
     /**
      * Create a connection to the database and sets the catalog based upon the
      * properties specified in db.properties. Connections to the database should
