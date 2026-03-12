@@ -67,5 +67,20 @@ public class DataAccessTest {
         assertNull(fromDb);
     }
 
+    @Test
+    void deleteAuth_positive() throws DataAccessException {
+        var user = new UserData("alice", "password", "alice@example.com");
+        dao.createUser(user);
+        var auth = dao.createAuth("alice");
+
+        dao.deleteAuth(auth.authToken());
+        var fromDb = dao.getAuth(auth.authToken());
+        assertNull(fromDb);
+    }
+
+    @Test
+    void deleteAuth_negative_notFound() throws DataAccessException {
+        dao.deleteAuth("no-such-token");
+    }
 
 }

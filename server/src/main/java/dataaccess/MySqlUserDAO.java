@@ -130,8 +130,19 @@ public class MySqlUserDAO implements DataAccess {
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        var sql = "DELETE FROM auth WHERE authToken = ?";
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, authToken);
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to delete auth", e);
+        }
     }
+
 
     @Override
     public int createGame(GameData game) throws DataAccessException {
