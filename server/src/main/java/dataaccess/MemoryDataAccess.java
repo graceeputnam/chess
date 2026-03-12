@@ -62,9 +62,9 @@ public class MemoryDataAccess implements DataAccess {
     public int createGame(GameData game) {
         int id = nextGameID++;
         GameData stored = new GameData(id,
+                game.gameName(),
                 game.whiteUsername(),
                 game.blackUsername(),
-                game.gameName(),
                 game.game());
         games.put(id, stored);
         return id;

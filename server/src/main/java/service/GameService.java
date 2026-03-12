@@ -35,26 +35,22 @@ public class GameService {
         Collection<GameData> gameCollection = dataAccess.listGames();
         ArrayList<GameData> gameList = new ArrayList<>(gameCollection);
         GameData[] gamesArray = gameList.toArray(new GameData[0]);
-
         return new ListGamesResult(gamesArray, null);
     }
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request)
             throws DataAccessException {
-        String username = checkAuth(authToken);
+        checkAuth(authToken);
         if (request == null || request.gameName() == null) {
             throw new BadRequestException("bad request");
         }
 
-        String gameName = request.gameName();
-        ChessGame chessGame = new ChessGame();
-
         GameData newGame = new GameData(
                 0,
+                request.gameName(),
                 null,
                 null,
-                gameName,
-                chessGame);
+                new ChessGame());
 
         int id = dataAccess.createGame(newGame);
         return new CreateGameResult(id, null);
@@ -67,9 +63,7 @@ public class GameService {
             throw new BadRequestException("bad request");
         }
 
-        Integer gameID = request.gameID();
-        String playerColor = request.playerColor();
-        GameData game = dataAccess.getGame(gameID);
+        GameData game = dataAccess.getGame(request.gameID());
         if (game == null) {
             throw new BadRequestException("bad request");
         }
@@ -77,12 +71,12 @@ public class GameService {
         String whiteUsername = game.whiteUsername();
         String blackUsername = game.blackUsername();
 
-        if ("WHITE".equals(playerColor)) {
+        if ("WHITE".equals(request.playerColor())) {
             if (whiteUsername != null) {
                 throw new ForbiddenException("already taken");
             }
             whiteUsername = username;
-        } else if ("BLACK".equals(playerColor)) {
+        } else if ("BLACK".equals(request.playerColor())) {
             if (blackUsername != null) {
                 throw new ForbiddenException("already taken");
             }
@@ -93,9 +87,9 @@ public class GameService {
 
         GameData updated = new GameData(
                 game.gameID(),
+                game.gameName(),
                 whiteUsername,
                 blackUsername,
-                game.gameName(),
                 game.game());
 
         dataAccess.updateGame(updated);
