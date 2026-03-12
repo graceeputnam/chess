@@ -6,6 +6,7 @@ import model.UserData;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.UUID;
 
 public class MySqlUserDAO implements DataAccess {
 
@@ -20,10 +21,11 @@ public class MySqlUserDAO implements DataAccess {
 
             var dbName = "chess";
             stmt.executeUpdate("USE " + dbName);
+            stmt.executeUpdate("TRUNCATE TABLE auth");
             stmt.executeUpdate("TRUNCATE TABLE user");
 
         } catch (SQLException e) {
-            throw new DataAccessException("Unable to clear user table", e);
+            throw new DataAccessException("Unable to clear tables", e);
         }
     }
 
@@ -57,7 +59,9 @@ public class MySqlUserDAO implements DataAccess {
     public UserData getUser(String username) throws DataAccessException {
         var sql = "SELECT username, password, email FROM user WHERE username = ?";
 
-        try (var conn = DatabaseManager.getConnection(); var stmt = conn.prepareStatement(sql)) {
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
             stmt.setString(1, username);
 
             try (var rs = stmt.executeQuery()) {
@@ -76,10 +80,27 @@ public class MySqlUserDAO implements DataAccess {
         }
     }
 
-
     @Override
     public AuthData createAuth(String username) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        var user = getUser(username);
+        if (user == null) {
+            throw new DataAccessException("user doesn't exist");
+        }
+        var token = UUID.randomUUID().toString();
+        var sql = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, token);
+            stmt.setString(2, username);
+            stmt.executeUpdate();
+
+            return new AuthData(token, username);
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to create auth", e);
+        }
     }
 
     @Override
@@ -121,14 +142,22 @@ public class MySqlUserDAO implements DataAccess {
             stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + dbName);
             stmt.executeUpdate("USE " + dbName);
 
-            var sql = """
+            var userSql = """
                     CREATE TABLE IF NOT EXISTS user (
                         username  VARCHAR(255) NOT NULL PRIMARY KEY,
                         password  VARCHAR(255) NOT NULL,
                         email     VARCHAR(255)
                     )
                     """;
-            stmt.executeUpdate(sql);
+            stmt.executeUpdate(userSql);
+
+            var authSql = """
+                    CREATE TABLE IF NOT EXISTS auth (
+                        authToken  VARCHAR(255) NOT NULL PRIMARY KEY,
+                        username   VARCHAR(255) NOT NULL
+                    )
+                    """;
+            stmt.executeUpdate(authSql);
 
         } catch (SQLException e) {
             throw new DataAccessException("Unable to configure database", e);
