@@ -281,40 +281,36 @@ public class MySqlUserDAO implements DataAccess {
     }
 
     private void configureDatabase() throws DataAccessException {
+        DatabaseManager.createDatabase();
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.createStatement()) {
 
-            var dbName = "chess";
-
-            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + dbName);
-            stmt.executeUpdate("USE " + dbName);
-
             var userSql = """
-                    CREATE TABLE IF NOT EXISTS user (
-                        username  VARCHAR(255) NOT NULL PRIMARY KEY,
-                        password  VARCHAR(255) NOT NULL,
-                        email     VARCHAR(255)
-                    )
-                    """;
+                CREATE TABLE IF NOT EXISTS user (
+                    username  VARCHAR(255) NOT NULL PRIMARY KEY,
+                    password  VARCHAR(255) NOT NULL,
+                    email     VARCHAR(255)
+                )
+                """;
             stmt.executeUpdate(userSql);
 
             var authSql = """
-                    CREATE TABLE IF NOT EXISTS auth (
-                        authToken  VARCHAR(255) NOT NULL PRIMARY KEY,
-                        username   VARCHAR(255) NOT NULL
-                    )
-                    """;
+                CREATE TABLE IF NOT EXISTS auth (
+                    authToken  VARCHAR(255) NOT NULL PRIMARY KEY,
+                    username   VARCHAR(255) NOT NULL
+                )
+                """;
             stmt.executeUpdate(authSql);
 
             var gameSql = """
-                    CREATE TABLE IF NOT EXISTS game (
-                        gameID        INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        gameName      VARCHAR(255) NOT NULL,
-                        whiteUsername VARCHAR(255),
-                        blackUsername VARCHAR(255),
-                        game          TEXT NOT NULL
-                    )
-                    """;
+                CREATE TABLE IF NOT EXISTS game (
+                    gameID        INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    gameName      VARCHAR(255) NOT NULL,
+                    whiteUsername VARCHAR(255),
+                    blackUsername VARCHAR(255),
+                    game          TEXT NOT NULL
+                )
+                """;
             stmt.executeUpdate(gameSql);
 
         } catch (SQLException e) {
