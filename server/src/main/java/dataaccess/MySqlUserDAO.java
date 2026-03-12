@@ -23,14 +23,9 @@ public class MySqlUserDAO implements DataAccess {
     public void clear() throws DataAccessException {
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.createStatement()) {
-
-            var dbName = "chess";
-            stmt.executeUpdate("USE " + dbName);
-
             stmt.executeUpdate("TRUNCATE TABLE auth");
             stmt.executeUpdate("TRUNCATE TABLE game");
             stmt.executeUpdate("TRUNCATE TABLE user");
-
         } catch (SQLException e) {
             throw new DataAccessException("Unable to clear tables", e);
         }
@@ -43,20 +38,14 @@ public class MySqlUserDAO implements DataAccess {
         }
 
         var sql = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
-        try (var conn = DatabaseManager.getConnection()) {
-
-            var dbName = "chess";
-            try (var useStmt = conn.createStatement()) {
-                useStmt.executeUpdate("USE " + dbName);
-            }
-
-            try (var stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, user.username());
-                stmt.setString(2, user.password());
-                stmt.setString(3, user.email());
-                stmt.executeUpdate();
-            }
-
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, user.username());
+            stmt.setString(2, user.password());
+            stmt.setString(3, user.email());
+            stmt.executeUpdate();
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+            throw new service.ForbiddenException("already taken");
         } catch (SQLException e) {
             throw new DataAccessException("Unable to create user", e);
         }

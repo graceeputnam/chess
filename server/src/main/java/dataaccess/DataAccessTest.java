@@ -34,7 +34,7 @@ public class DataAccessTest {
         var user1 = new UserData("alice", "password", "alice@example.com");
         var user2 = new UserData("alice", "different", "other@example.com");
         dao.createUser(user1);
-        assertThrows(DataAccessException.class, () -> dao.createUser(user2));
+        assertThrows(service.ForbiddenException.class, () -> dao.createUser(user2));
     }
 
     @Test
