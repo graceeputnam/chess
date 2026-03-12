@@ -49,4 +49,23 @@ public class DataAccessTest {
         assertThrows(DataAccessException.class, () -> dao.createAuth("no-such-user"));
     }
 
+    @Test
+    void getAuth_positive() throws DataAccessException {
+        var user = new UserData("alice", "password", "alice@example.com");
+        dao.createUser(user);
+        var auth = dao.createAuth("alice");
+
+        var fromDb = dao.getAuth(auth.authToken());
+        assertNotNull(fromDb);
+        assertEquals(auth.authToken(), fromDb.authToken());
+        assertEquals("alice", fromDb.username());
+    }
+
+    @Test
+    void getAuth_negative_notFound() throws DataAccessException {
+        var fromDb = dao.getAuth("no-such-token");
+        assertNull(fromDb);
+    }
+
+
 }
