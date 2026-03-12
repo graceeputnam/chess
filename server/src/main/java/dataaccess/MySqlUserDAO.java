@@ -1,14 +1,19 @@
 package dataaccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
 public class MySqlUserDAO implements DataAccess {
+
+    private final Gson gson = new Gson();
 
     public MySqlUserDAO() throws DataAccessException {
         configureDatabase();
@@ -21,7 +26,9 @@ public class MySqlUserDAO implements DataAccess {
 
             var dbName = "chess";
             stmt.executeUpdate("USE " + dbName);
+
             stmt.executeUpdate("TRUNCATE TABLE auth");
+            stmt.executeUpdate("TRUNCATE TABLE game");
             stmt.executeUpdate("TRUNCATE TABLE user");
 
         } catch (SQLException e) {
@@ -86,6 +93,7 @@ public class MySqlUserDAO implements DataAccess {
         if (user == null) {
             throw new DataAccessException("user doesn't exist");
         }
+
         var token = UUID.randomUUID().toString();
         var sql = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
 
@@ -127,7 +135,6 @@ public class MySqlUserDAO implements DataAccess {
         }
     }
 
-
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
         var sql = "DELETE FROM auth WHERE authToken = ?";
@@ -143,25 +150,134 @@ public class MySqlUserDAO implements DataAccess {
         }
     }
 
-
     @Override
     public int createGame(GameData game) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        if (game == null) {
+            throw new DataAccessException("invalid game");
+        }
+
+        var sql = """
+                INSERT INTO game (gameName, whiteUsername, blackUsername, game)
+                VALUES (?, ?, ?, ?)
+                """;
+
+        var name = game.gameName() == null ? "" : game.gameName();
+        var json = gson.toJson(game.game());
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, name);
+            stmt.setString(2, game.whiteUsername());
+            stmt.setString(3, game.blackUsername());
+            stmt.setString(4, json);
+            stmt.executeUpdate();
+
+            try (var rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt("GENERATED_KEY");
+                } else {
+                    throw new DataAccessException("Unable to get generated game ID");
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to create game", e);
+        }
     }
 
     @Override
     public GameData getGame(int gameID) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        var sql = """
+                SELECT gameID, gameName, whiteUsername, blackUsername, game
+                FROM game
+                WHERE gameID = ?
+                """;
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, gameID);
+
+            try (var rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    var id = rs.getInt("gameID");
+                    var name = rs.getString("gameName");
+                    var white = rs.getString("whiteUsername");
+                    var black = rs.getString("blackUsername");
+                    var json = rs.getString("game");
+                    var chessGame = gson.fromJson(json, ChessGame.class);
+
+                    return new GameData(id, name, white, black, chessGame);
+                } else {
+                    return null;
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to get game", e);
+        }
     }
 
     @Override
     public Collection<GameData> listGames() throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        var sql = """
+                SELECT gameID, gameName, whiteUsername, blackUsername, game
+                FROM game
+                """;
+
+        var games = new ArrayList<GameData>();
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql);
+             var rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                var id = rs.getInt("gameID");
+                var name = rs.getString("gameName");
+                var white = rs.getString("whiteUsername");
+                var black = rs.getString("blackUsername");
+                var json = rs.getString("game");
+                var chessGame = gson.fromJson(json, ChessGame.class);
+
+                games.add(new GameData(id, name, white, black, chessGame));
+            }
+
+            return games;
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to list games", e);
+        }
     }
 
     @Override
     public void updateGame(GameData game) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        if (game == null) {
+            throw new DataAccessException("invalid game");
+        }
+
+        var sql = """
+                UPDATE game
+                SET gameName = ?, whiteUsername = ?, blackUsername = ?, game = ?
+                WHERE gameID = ?
+                """;
+
+        var name = game.gameName() == null ? "" : game.gameName();
+        var json = gson.toJson(game.game());
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, name);                 // gameName
+            stmt.setString(2, game.whiteUsername()); // whiteUsername
+            stmt.setString(3, game.blackUsername()); // blackUsername
+            stmt.setString(4, json);                 // game (JSON)
+            stmt.setInt(5, game.gameID());           // WHERE gameID = ?
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to update game", e);
+        }
     }
 
     private void configureDatabase() throws DataAccessException {
@@ -189,6 +305,17 @@ public class MySqlUserDAO implements DataAccess {
                     )
                     """;
             stmt.executeUpdate(authSql);
+
+            var gameSql = """
+                    CREATE TABLE IF NOT EXISTS game (
+                        gameID        INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        gameName      VARCHAR(255) NOT NULL,
+                        whiteUsername VARCHAR(255),
+                        blackUsername VARCHAR(255),
+                        game          TEXT NOT NULL
+                    )
+                    """;
+            stmt.executeUpdate(gameSql);
 
         } catch (SQLException e) {
             throw new DataAccessException("Unable to configure database", e);
