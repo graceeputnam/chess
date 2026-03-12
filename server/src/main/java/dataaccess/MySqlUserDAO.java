@@ -57,9 +57,7 @@ public class MySqlUserDAO implements DataAccess {
 
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, username);
-
             try (var rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     var name = rs.getString("username");
@@ -82,7 +80,6 @@ public class MySqlUserDAO implements DataAccess {
         if (user == null) {
             throw new DataAccessException("user doesn't exist");
         }
-
         var token = UUID.randomUUID().toString();
         var sql = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
 
@@ -106,7 +103,6 @@ public class MySqlUserDAO implements DataAccess {
 
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, authToken);
 
             try (var rs = stmt.executeQuery()) {
@@ -118,7 +114,6 @@ public class MySqlUserDAO implements DataAccess {
                     return null;
                 }
             }
-
         } catch (Exception e) {
             throw new DataAccessException("Unable to get auth", e);
         }
@@ -152,7 +147,6 @@ public class MySqlUserDAO implements DataAccess {
 
         var name = game.gameName() == null ? "" : game.gameName();
         var json = gson.toJson(game.game());
-
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
 
@@ -169,7 +163,6 @@ public class MySqlUserDAO implements DataAccess {
                     throw new DataAccessException("Unable to get generated game ID");
                 }
             }
-
         } catch (Exception e) {
             throw new DataAccessException("Unable to create game", e);
         }
@@ -202,7 +195,6 @@ public class MySqlUserDAO implements DataAccess {
                     return null;
                 }
             }
-
         } catch (Exception e) {
             throw new DataAccessException("Unable to get game", e);
         }
@@ -233,7 +225,6 @@ public class MySqlUserDAO implements DataAccess {
             }
 
             return games;
-
         } catch (Exception e) {
             throw new DataAccessException("Unable to list games", e);
         }
