@@ -105,8 +105,28 @@ public class MySqlUserDAO implements DataAccess {
 
     @Override
     public AuthData getAuth(String authToken) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        var sql = "SELECT authToken, username FROM auth WHERE authToken = ?";
+
+        try (var conn = DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, authToken);
+
+            try (var rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    var token = rs.getString("authToken");
+                    var username = rs.getString("username");
+                    return new AuthData(token, username);
+                } else {
+                    return null;
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to get auth", e);
+        }
     }
+
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
