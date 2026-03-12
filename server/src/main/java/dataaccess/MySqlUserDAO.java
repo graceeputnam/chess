@@ -34,7 +34,6 @@ public class MySqlUserDAO implements DataAccess {
         }
 
         var sql = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
-
         try (var conn = DatabaseManager.getConnection()) {
 
             var dbName = "chess";
@@ -50,15 +49,33 @@ public class MySqlUserDAO implements DataAccess {
             }
 
         } catch (SQLException e) {
-            // duplicate username, etc.
             throw new DataAccessException("Unable to create user", e);
         }
     }
 
     @Override
     public UserData getUser(String username) throws DataAccessException {
-        throw new DataAccessException("Not implemented yet");
+        var sql = "SELECT username, password, email FROM user WHERE username = ?";
+
+        try (var conn = DatabaseManager.getConnection(); var stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+
+            try (var rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    var name = rs.getString("username");
+                    var password = rs.getString("password");
+                    var email = rs.getString("email");
+                    return new UserData(name, password, email);
+                } else {
+                    return null;
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to get user", e);
+        }
     }
+
 
     @Override
     public AuthData createAuth(String username) throws DataAccessException {
