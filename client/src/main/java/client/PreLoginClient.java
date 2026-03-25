@@ -13,27 +13,17 @@ public class PreLoginClient {
     }
 
     public String eval(String input) {
-        switch (input.toLowerCase()) {
-            case "help" -> {
-                return """
-                        register - create an account
-                        login - login to your account
-                        quit - exit the program
-                        help - show this menu""";
-            }
-            case "quit" -> {
-                return "quit";
-            }
-            case "login" -> {
-                return login();
-            }
-            case "register" -> {
-                return register();
-            }
-            default -> {
-                return "Unknown command. Type 'help' for options.";
-            }
-        }
+        return switch (input.toLowerCase()) {
+            case "help" -> """
+                    register - create an account
+                    login - login to your account
+                    quit - exit the program
+                    help - show this menu""";
+            case "quit" -> "quit";
+            case "login" -> login();
+            case "register" -> register();
+            default -> "Unknown command. Type 'help' for options.";
+        };
     }
 
     private String login() {
