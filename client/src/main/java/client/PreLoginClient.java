@@ -33,7 +33,7 @@ public class PreLoginClient {
         String password = scanner.nextLine();
         try {
             var authData = facade.login(username, password);
-            new PostLoginClient(facade, authData.authToken()).run();
+            new PostLoginClient(facade, authData.authToken(), authData.username()).run();
             return "Logged out successfully.";
         } catch (Exception e) {
             return "Login failed: " + e.getMessage();
@@ -49,7 +49,7 @@ public class PreLoginClient {
         String email = scanner.nextLine();
         try {
             var authData = facade.register(username, password, email);
-            new PostLoginClient(facade, authData.authToken()).run();
+            new PostLoginClient(facade, authData.authToken(), authData.username()).run();
             return "Logged out successfully.";
         } catch (Exception e) {
             return "Registration failed: " + e.getMessage();
