@@ -11,7 +11,7 @@ public class ChessClient {
     }
 
     public void run() {
-        System.out.println("Welcome to Chess! Type 'help' to get started.");
+        System.out.println("Welcome to 240 Chess! Type 'help' to see available commands.");
         var scanner = new Scanner(System.in);
         while (true) {
             System.out.print("[LOGGED_OUT] >>> ");
