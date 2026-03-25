@@ -6,8 +6,8 @@ import dataaccess.DataAccessException;
 import dataaccess.MySqlUserDAO;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import model.UserData;
 import service.*;
+import model.UserData;
 
 public class Server {
 

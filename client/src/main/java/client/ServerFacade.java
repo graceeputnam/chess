@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Map;
+import model.AuthData;
 
 public class ServerFacade {
 
@@ -16,6 +17,16 @@ public class ServerFacade {
 
     public ServerFacade(int port) {
         this.baseUrl = "http://localhost:" + port;
+    }
+
+    public void clear() throws Exception {
+        makeRequest("/db", "DELETE", null, null);
+    }
+
+    public AuthData register(String username, String password, String email) throws Exception {
+        var body = Map.of("username", username, "password", password, "email", email);
+        var connection = makeRequest("/user", "POST", body, null);
+        return readBody(connection, AuthData.class);
     }
 
     private HttpURLConnection makeRequest(String path, String method, Object body, String authToken) throws Exception {

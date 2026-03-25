@@ -2,14 +2,14 @@ package dataaccess;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
-import model.AuthData;
-import model.GameData;
-import model.UserData;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
+import model.UserData;
+import model.AuthData;
+import model.GameData;
 
 public class MySqlUserDAO implements DataAccess {
 

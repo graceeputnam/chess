@@ -1,10 +1,9 @@
 package dataaccess;
 
-import model.AuthData;
-import model.GameData;
-import model.UserData;
-
 import java.util.Collection;
+import model.UserData;
+import model.GameData;
+import model.AuthData;
 
 public interface DataAccess {
     void clear() throws DataAccessException;
