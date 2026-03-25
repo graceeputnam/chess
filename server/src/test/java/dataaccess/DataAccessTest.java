@@ -3,6 +3,8 @@ package dataaccess;
 import chess.ChessGame;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import model.UserData;
+import model.GameData;
 
 import java.util.stream.Collectors;
 
