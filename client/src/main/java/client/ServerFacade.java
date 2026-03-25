@@ -1,14 +1,16 @@
 package client;
 
 import com.google.gson.Gson;
+import model.AuthData;
+import model.GameData;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
-import model.AuthData;
 
 public class ServerFacade {
 
@@ -25,8 +27,35 @@ public class ServerFacade {
 
     public AuthData register(String username, String password, String email) throws Exception {
         var body = Map.of("username", username, "password", password, "email", email);
-        var connection = makeRequest("/user", "POST", body, null);
-        return readBody(connection, AuthData.class);
+        var conn = makeRequest("/user", "POST", body, null);
+        return readBody(conn, AuthData.class);
+    }
+
+    public AuthData login(String username, String password) throws Exception {
+        var body = Map.of("username", username, "password", password);
+        var conn = makeRequest("/session", "POST", body, null);
+        return readBody(conn, AuthData.class);
+    }
+
+    public void logout(String authToken) throws Exception {
+        makeRequest("/session", "DELETE", null, authToken);
+    }
+
+    public GameData createGame(String authToken, String gameName) throws Exception {
+        var body = Map.of("gameName", gameName);
+        var conn = makeRequest("/game", "POST", body, authToken);
+        return readBody(conn, GameData.class);
+    }
+
+    public List<GameData> listGames(String authToken) throws Exception {
+        var conn = makeRequest("/game", "GET", null, authToken);
+        var result = readBody(conn, GamesResponse.class);
+        return result.games();
+    }
+
+    public void joinGame(String authToken, int gameID, String playerColor) throws Exception {
+        var body = Map.of("gameID", gameID, "playerColor", playerColor);
+        makeRequest("/game", "PUT", body, authToken);
     }
 
     private HttpURLConnection makeRequest(String path, String method, Object body, String authToken) throws Exception {
@@ -65,4 +94,6 @@ public class ServerFacade {
             return gson.fromJson(new InputStreamReader(is), type);
         }
     }
+
+    private record GamesResponse(List<GameData> games) {}
 }
