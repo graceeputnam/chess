@@ -59,8 +59,12 @@ public class PostLoginClient {
 
     private String createGame() {
         System.out.print("Game name: ");
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) {
+            return "Game name cannot be empty.";
+        }
         try {
-            facade.createGame(authToken, scanner.nextLine());
+            facade.createGame(authToken, name);
             return "Game created!";
         } catch (Exception e) {
             return "Failed to create game: " + e.getMessage();
@@ -88,14 +92,20 @@ public class PostLoginClient {
     }
 
     private String playGame() {
+        if (lastGameList.isEmpty()) {
+            return "No games to join. Please list games first.";
+        }
         System.out.print("Game number: ");
-        String number = scanner.nextLine();
+        String number = scanner.nextLine().trim();
         System.out.print("Color (WHITE/BLACK): ");
-        String color = scanner.nextLine().toUpperCase();
+        String color = scanner.nextLine().trim().toUpperCase();
+        if (!color.equals("WHITE") && !color.equals("BLACK")) {
+            return "Invalid color. Please enter WHITE or BLACK.";
+        }
         try {
             int index = Integer.parseInt(number) - 1;
             if (index < 0 || index >= lastGameList.size()) {
-                return "Invalid game number. Please list games first.";
+                return "Invalid game number.";
             }
             facade.joinGame(authToken, lastGameList.get(index).gameID(), color);
             BoardDrawer.draw(color.equals("BLACK"));
@@ -108,11 +118,14 @@ public class PostLoginClient {
     }
 
     private String observeGame() {
+        if (lastGameList.isEmpty()) {
+            return "No games to observe. Please list games first.";
+        }
         System.out.print("Game number: ");
         try {
-            int index = Integer.parseInt(scanner.nextLine()) - 1;
+            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
             if (index < 0 || index >= lastGameList.size()) {
-                return "Invalid game number. Please list games first.";
+                return "Invalid game number.";
             }
             BoardDrawer.draw(false);
             return "Observing game!";
