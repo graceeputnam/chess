@@ -9,19 +9,21 @@ public class PostLoginClient {
 
     private final ServerFacade facade;
     private final String authToken;
+    private final String username;
     private final Scanner scanner;
     private List<GameData> lastGameList = new ArrayList<>();
 
-    public PostLoginClient(ServerFacade facade, String authToken) {
+    public PostLoginClient(ServerFacade facade, String authToken, String username) {
         this.facade = facade;
         this.authToken = authToken;
+        this.username = username;
         this.scanner = new Scanner(System.in);
     }
 
     public void run() {
-        System.out.println("Logged in! Type 'help' to see commands.");
+        System.out.println("Logged in as " + username + "! Type 'help' to see commands.");
         while (true) {
-            System.out.print("[LOGGED_IN] >>> ");
+            System.out.print("[" + username + "] >>> ");
             String result = eval(scanner.nextLine().trim());
             System.out.println(result);
             if (result.equals("logged out")) {
