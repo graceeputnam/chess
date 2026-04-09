@@ -31,6 +31,7 @@ public class WebSocketHandler {
         switch (command.getCommandType()) {
             case CONNECT -> handleConnect(session, command);
             case MAKE_MOVE -> handleMakeMove(session, gson.fromJson(message, MakeMoveCommand.class));
+            case LEAVE -> handleLeave(session, command);
         }
     }
 
@@ -121,18 +122,15 @@ public class WebSocketHandler {
         if (game.isInCheckmate(ChessGame.TeamColor.WHITE)) {
             sendNotificationToAll(command.getGameID(), gameData.whiteUsername() + " is in checkmate!");
             game.setOver(true);
-            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
-                    gameData.whiteUsername(), gameData.blackUsername(), game));
+            updateGame(gameData, game);
         } else if (game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
             sendNotificationToAll(command.getGameID(), gameData.blackUsername() + " is in checkmate!");
             game.setOver(true);
-            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
-                    gameData.whiteUsername(), gameData.blackUsername(), game));
+            updateGame(gameData, game);
         } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
             sendNotificationToAll(command.getGameID(), "Stalemate! The game is over.");
             game.setOver(true);
-            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
-                    gameData.whiteUsername(), gameData.blackUsername(), game));
+            updateGame(gameData, game);
         } else if (game.isInCheck(ChessGame.TeamColor.WHITE)) {
             sendNotificationToAll(command.getGameID(), gameData.whiteUsername() + " is in check!");
         } else if (game.isInCheck(ChessGame.TeamColor.BLACK)) {
@@ -140,11 +138,56 @@ public class WebSocketHandler {
         }
     }
 
+    private void handleLeave(Session session, UserGameCommand command) throws IOException {
+        var auth = getAuth(command.getAuthToken());
+        if (auth == null) {
+            sendError(session, "Error: unauthorized");
+            return;
+        }
+
+        GameData gameData = getGame(session, command.getGameID());
+        if (gameData == null) return;
+
+        String username = auth.username();
+
+        if (username.equals(gameData.whiteUsername())) {
+            try {
+                dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                        null, gameData.blackUsername(), gameData.game()));
+            } catch (DataAccessException e) {
+                sendError(session, "Error: " + e.getMessage());
+                return;
+            }
+        } else if (username.equals(gameData.blackUsername())) {
+            try {
+                dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                        gameData.whiteUsername(), null, gameData.game()));
+            } catch (DataAccessException e) {
+                sendError(session, "Error: " + e.getMessage());
+                return;
+            }
+        }
+
+        connections.remove(command.getGameID(), username);
+
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        notification.message = username + " left the game";
+        connections.broadcast(command.getGameID(), username, gson.toJson(notification));
+    }
+
+    private void updateGame(GameData gameData, ChessGame game) throws IOException {
+        try {
+            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                    gameData.whiteUsername(), gameData.blackUsername(), game));
+        } catch (DataAccessException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
     private void sendNotificationToAll(int gameID, String message) throws IOException {
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         notification.message = message;
-        String json = gson.toJson(notification);
-        connections.broadcast(gameID, "", json);
+        connections.broadcast(gameID, "", gson.toJson(notification));
     }
 
     private String getRole(GameData game, String username) {
