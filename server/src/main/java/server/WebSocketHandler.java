@@ -5,7 +5,6 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -14,7 +13,6 @@ import chess.InvalidMoveException;
 
 import java.io.IOException;
 
-@WebSocket
 public class WebSocketHandler {
 
     private final DataAccess dataAccess;
@@ -25,8 +23,9 @@ public class WebSocketHandler {
         this.dataAccess = dataAccess;
     }
 
-    @OnWebSocketMessage
-    public void onMessage(Session session, String message) throws IOException {
+    public void onMessage(io.javalin.websocket.WsMessageContext ctx) throws IOException {
+        Session session = ctx.session;
+        String message = ctx.message();
         UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
         switch (command.getCommandType()) {
             case CONNECT -> handleConnect(session, command);
