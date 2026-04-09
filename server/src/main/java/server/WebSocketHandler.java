@@ -32,6 +32,7 @@ public class WebSocketHandler {
             case CONNECT -> handleConnect(session, command);
             case MAKE_MOVE -> handleMakeMove(session, gson.fromJson(message, MakeMoveCommand.class));
             case LEAVE -> handleLeave(session, command);
+            case RESIGN -> handleResign(session, command);
         }
     }
 
@@ -173,6 +174,42 @@ public class WebSocketHandler {
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         notification.message = username + " left the game";
         connections.broadcast(command.getGameID(), username, gson.toJson(notification));
+    }
+
+    private void handleResign(Session session, UserGameCommand command) throws IOException {
+        var auth = getAuth(command.getAuthToken());
+        if (auth == null) {
+            sendError(session, "Error: unauthorized");
+            return;
+        }
+
+        GameData gameData = getGame(session, command.getGameID());
+        if (gameData == null) return;
+
+        String username = auth.username();
+        ChessGame game = gameData.game();
+
+        boolean isPlayer = username.equals(gameData.whiteUsername()) || username.equals(gameData.blackUsername());
+        if (!isPlayer) {
+            sendError(session, "Error: observers cannot resign");
+            return;
+        }
+
+        if (game.isOver()) {
+            sendError(session, "Error: game is already over");
+            return;
+        }
+
+        game.setOver(true);
+        try {
+            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                    gameData.whiteUsername(), gameData.blackUsername(), game));
+        } catch (DataAccessException e) {
+            sendError(session, "Error: " + e.getMessage());
+            return;
+        }
+
+        sendNotificationToAll(command.getGameID(), username + " resigned. The game is over.");
     }
 
     private void updateGame(GameData gameData, ChessGame game) throws IOException {
