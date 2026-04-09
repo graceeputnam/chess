@@ -19,7 +19,7 @@ public class Server {
 
     public Server() {
         try {
-            this.dataAccess = new MySqlUserDAO(); // initializes DB + tables
+            this.dataAccess = new MySqlUserDAO();
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
         }
@@ -27,7 +27,12 @@ public class Server {
         this.userService = new UserService(dataAccess);
         this.gameService = new GameService(dataAccess);
 
+        var webSocketHandler = new WebSocketHandler(dataAccess);
+
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
+        javalin.ws("/ws", ws -> {
+            ws.onMessage(webSocketHandler::onMessage);
+        });
         javalin.delete("/db", this::handleClear);
         javalin.post("/user", this::handleRegister);
         javalin.post("/session", this::handleLogin);
@@ -70,7 +75,6 @@ public class Server {
         try {
             UserData request = gson.fromJson(ctx.body(), UserData.class);
             UserData loginRequest = new UserData(request.username(), request.password(), null);
-
             AuthResult result = userService.login(loginRequest);
             ctx.status(200);
             ctx.result(gson.toJson(result));
