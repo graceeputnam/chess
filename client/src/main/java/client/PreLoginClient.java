@@ -6,10 +6,12 @@ public class PreLoginClient {
 
     private final ServerFacade facade;
     private final Scanner scanner;
+    private final int port;
 
     public PreLoginClient(int port) {
         this.facade = new ServerFacade(port);
         this.scanner = new Scanner(System.in);
+        this.port = port;
     }
 
     public String eval(String input) {
@@ -33,7 +35,7 @@ public class PreLoginClient {
         String password = scanner.nextLine();
         try {
             var authData = facade.login(username, password);
-            new PostLoginClient(facade, authData.authToken(), authData.username()).run();
+            new PostLoginClient(facade, authData.authToken(), authData.username(), port).run();
             return "Logged out successfully.";
         } catch (Exception e) {
             return "Login failed: " + e.getMessage();
@@ -49,7 +51,7 @@ public class PreLoginClient {
         String email = scanner.nextLine();
         try {
             var authData = facade.register(username, password, email);
-            new PostLoginClient(facade, authData.authToken(), authData.username()).run();
+            new PostLoginClient(facade, authData.authToken(), authData.username(), port).run();
             return "Logged out successfully.";
         } catch (Exception e) {
             return "Registration failed: " + e.getMessage();

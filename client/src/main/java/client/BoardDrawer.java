@@ -3,21 +3,25 @@ package client;
 import chess.*;
 import ui.EscapeSequences;
 
+import java.util.Collection;
+
 public class BoardDrawer {
 
     public static void draw(boolean isBlack) {
         var board = new ChessBoard();
         board.resetBoard();
         System.out.println();
-        if (isBlack) {
-            drawBoard(board, true);
-        } else {
-            drawBoard(board, false);
-        }
+        drawBoard(board, isBlack, null);
         System.out.println();
     }
 
-    private static void drawBoard(ChessBoard board, boolean isBlack) {
+    public static void draw(ChessGame game, boolean isBlack, Collection<ChessPosition> highlights) {
+        System.out.println();
+        drawBoard(game.getBoard(), isBlack, highlights);
+        System.out.println();
+    }
+
+    private static void drawBoard(ChessBoard board, boolean isBlack, Collection<ChessPosition> highlights) {
         String[] cols = isBlack ? new String[]{"h","g","f","e","d","c","b","a"} :
                 new String[]{"a","b","c","d","e","f","g","h"};
         int[] rows = isBlack ? new int[]{1,2,3,4,5,6,7,8} :
@@ -29,7 +33,14 @@ public class BoardDrawer {
             for (String col : cols) {
                 int colNum = col.charAt(0) - 'a' + 1;
                 boolean isLight = (row + colNum) % 2 != 0;
-                String bg = isLight ? EscapeSequences.SET_BG_COLOR_WHITE : EscapeSequences.SET_BG_COLOR_DARK_GREEN;
+                boolean isHighlighted = highlights != null && highlights.contains(new ChessPosition(row, colNum));
+
+                String bg;
+                if (isHighlighted) {
+                    bg = isLight ? EscapeSequences.SET_BG_COLOR_GREEN : EscapeSequences.SET_BG_COLOR_DARK_GREEN;
+                } else {
+                    bg = isLight ? EscapeSequences.SET_BG_COLOR_WHITE : EscapeSequences.SET_BG_COLOR_DARK_GREEN;
+                }
                 System.out.print(bg + getPieceString(board, row, colNum));
             }
             System.out.print(EscapeSequences.SET_BG_COLOR_DARK_GREY + EscapeSequences.SET_TEXT_COLOR_WHITE + " " + row + " ");

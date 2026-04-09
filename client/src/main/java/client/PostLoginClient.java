@@ -11,13 +11,15 @@ public class PostLoginClient {
     private final String authToken;
     private final String username;
     private final Scanner scanner;
+    private final int port;
     private List<GameData> lastGameList = new ArrayList<>();
 
-    public PostLoginClient(ServerFacade facade, String authToken, String username) {
+    public PostLoginClient(ServerFacade facade, String authToken, String username, int port) {
         this.facade = facade;
         this.authToken = authToken;
         this.username = username;
         this.scanner = new Scanner(System.in);
+        this.port = port;
     }
 
     public void run() {
@@ -25,10 +27,8 @@ public class PostLoginClient {
         while (true) {
             System.out.print("[" + username + "] >>> ");
             String result = eval(scanner.nextLine().trim());
-            System.out.println(result);
-            if (result.equals("logged out")) {
-                break;
-            }
+            if (result != null) System.out.println(result);
+            if ("logged out".equals(result)) break;
         }
     }
 
@@ -62,9 +62,7 @@ public class PostLoginClient {
     private String createGame() {
         System.out.print("Game name: ");
         String name = scanner.nextLine().trim();
-        if (name.isEmpty()) {
-            return "Game name cannot be empty.";
-        }
+        if (name.isEmpty()) return "Game name cannot be empty.";
         try {
             facade.createGame(authToken, name);
             return "Game created!";
@@ -76,9 +74,7 @@ public class PostLoginClient {
     private String listGames() {
         try {
             lastGameList = facade.listGames(authToken);
-            if (lastGameList.isEmpty()) {
-                return "No games available.";
-            }
+            if (lastGameList.isEmpty()) return "No games available.";
             var sb = new StringBuilder();
             for (int i = 0; i < lastGameList.size(); i++) {
                 var game = lastGameList.get(i);
@@ -94,24 +90,20 @@ public class PostLoginClient {
     }
 
     private String playGame() {
-        if (lastGameList.isEmpty()) {
-            return "No games to join. Please list games first.";
-        }
+        if (lastGameList.isEmpty()) return "No games to join. Please list games first.";
         System.out.print("Game number: ");
         String number = scanner.nextLine().trim();
         System.out.print("Color (WHITE/BLACK): ");
         String color = scanner.nextLine().trim().toUpperCase();
-        if (!color.equals("WHITE") && !color.equals("BLACK")) {
-            return "Invalid color. Please enter WHITE or BLACK.";
-        }
+        if (!color.equals("WHITE") && !color.equals("BLACK")) return "Invalid color.";
         try {
             int index = Integer.parseInt(number) - 1;
-            if (index < 0 || index >= lastGameList.size()) {
-                return "Invalid game number.";
-            }
-            facade.joinGame(authToken, lastGameList.get(index).gameID(), color);
-            BoardDrawer.draw(color.equals("BLACK"));
-            return "Joined game!";
+            if (index < 0 || index >= lastGameList.size()) return "Invalid game number.";
+            GameData game = lastGameList.get(index);
+            facade.joinGame(authToken, game.gameID(), color);
+            boolean isBlack = color.equals("BLACK");
+            new GameplayClient(port, authToken, game.gameID(), username, isBlack, false).run();
+            return null;
         } catch (NumberFormatException e) {
             return "Please enter a valid number.";
         } catch (Exception e) {
@@ -120,17 +112,14 @@ public class PostLoginClient {
     }
 
     private String observeGame() {
-        if (lastGameList.isEmpty()) {
-            return "No games to observe. Please list games first.";
-        }
+        if (lastGameList.isEmpty()) return "No games to observe. Please list games first.";
         System.out.print("Game number: ");
         try {
             int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= lastGameList.size()) {
-                return "Invalid game number.";
-            }
-            BoardDrawer.draw(false);
-            return "Observing game!";
+            if (index < 0 || index >= lastGameList.size()) return "Invalid game number.";
+            GameData game = lastGameList.get(index);
+            new GameplayClient(port, authToken, game.gameID(), username, false, true).run();
+            return null;
         } catch (NumberFormatException e) {
             return "Please enter a valid number.";
         } catch (Exception e) {

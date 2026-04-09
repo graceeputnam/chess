@@ -30,8 +30,12 @@ public class WebSocketFacade {
 
     @OnMessage
     public void onMessage(String message) {
-        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
-        messageHandler.onMessage(serverMessage);
+        try {
+            ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+            messageHandler.onMessage(serverMessage);
+        } catch (Exception e) {
+            System.out.println("Error handling message: " + e.getMessage());
+        }
     }
 
     @OnOpen

@@ -2,7 +2,6 @@ package server;
 
 import org.eclipse.jetty.websocket.api.Session;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

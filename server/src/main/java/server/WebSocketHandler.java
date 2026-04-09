@@ -101,6 +101,17 @@ public class WebSocketHandler {
             return;
         }
 
+        boolean isCheckmate = game.isInCheckmate(ChessGame.TeamColor.WHITE) ||
+                game.isInCheckmate(ChessGame.TeamColor.BLACK);
+        boolean isStalemate = game.isInStalemate(ChessGame.TeamColor.WHITE) ||
+                game.isInStalemate(ChessGame.TeamColor.BLACK);
+        boolean isCheck = game.isInCheck(ChessGame.TeamColor.WHITE) ||
+                game.isInCheck(ChessGame.TeamColor.BLACK);
+
+        if (isCheckmate || isStalemate) {
+            game.setOver(true);
+        }
+
         try {
             dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
                     gameData.whiteUsername(), gameData.blackUsername(), game));
@@ -115,22 +126,16 @@ public class WebSocketHandler {
         sendToOne(session, loadMessage);
         connections.broadcast(command.getGameID(), username, loadJson);
 
-        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        notification.message = username + " moved " + command.move.toString();
-        connections.broadcast(command.getGameID(), username, gson.toJson(notification));
+        var moveNotification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        moveNotification.message = username + " moved " + command.move.toString();
+        connections.broadcast(command.getGameID(), username, gson.toJson(moveNotification));
 
         if (game.isInCheckmate(ChessGame.TeamColor.WHITE)) {
             sendNotificationToAll(command.getGameID(), gameData.whiteUsername() + " is in checkmate!");
-            game.setOver(true);
-            updateGame(gameData, game);
         } else if (game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
             sendNotificationToAll(command.getGameID(), gameData.blackUsername() + " is in checkmate!");
-            game.setOver(true);
-            updateGame(gameData, game);
-        } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
+        } else if (isStalemate) {
             sendNotificationToAll(command.getGameID(), "Stalemate! The game is over.");
-            game.setOver(true);
-            updateGame(gameData, game);
         } else if (game.isInCheck(ChessGame.TeamColor.WHITE)) {
             sendNotificationToAll(command.getGameID(), gameData.whiteUsername() + " is in check!");
         } else if (game.isInCheck(ChessGame.TeamColor.BLACK)) {
@@ -211,15 +216,6 @@ public class WebSocketHandler {
         sendNotificationToAll(command.getGameID(), username + " resigned. The game is over.");
     }
 
-    private void updateGame(GameData gameData, ChessGame game) throws IOException {
-        try {
-            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
-                    gameData.whiteUsername(), gameData.blackUsername(), game));
-        } catch (DataAccessException e) {
-            throw new IOException(e.getMessage());
-        }
-    }
-
     private void sendNotificationToAll(int gameID, String message) throws IOException {
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         notification.message = message;
@@ -255,12 +251,16 @@ public class WebSocketHandler {
     }
 
     private void sendToOne(Session session, ServerMessage message) throws IOException {
-        session.getRemote().sendString(gson.toJson(message));
+        if (session.isOpen()) {
+            session.getRemote().sendString(gson.toJson(message));
+        }
     }
 
     private void sendError(Session session, String errorMessage) throws IOException {
-        var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
-        error.errorMessage = errorMessage;
-        session.getRemote().sendString(gson.toJson(error));
+        if (session.isOpen()) {
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+            error.errorMessage = errorMessage;
+            session.getRemote().sendString(gson.toJson(error));
+        }
     }
 }
