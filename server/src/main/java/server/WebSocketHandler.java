@@ -6,8 +6,11 @@ import dataaccess.DataAccessException;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
+import chess.ChessGame;
+import chess.InvalidMoveException;
 
 import java.io.IOException;
 
@@ -27,6 +30,7 @@ public class WebSocketHandler {
         UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
         switch (command.getCommandType()) {
             case CONNECT -> handleConnect(session, command);
+            case MAKE_MOVE -> handleMakeMove(session, gson.fromJson(message, MakeMoveCommand.class));
         }
     }
 
@@ -51,6 +55,96 @@ public class WebSocketHandler {
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         notification.message = username + " joined the game as " + role;
         connections.broadcast(command.getGameID(), username, gson.toJson(notification));
+    }
+
+    private void handleMakeMove(Session session, MakeMoveCommand command) throws IOException {
+        var auth = getAuth(command.getAuthToken());
+        if (auth == null) {
+            sendError(session, "Error: unauthorized");
+            return;
+        }
+
+        GameData gameData = getGame(session, command.getGameID());
+        if (gameData == null) return;
+
+        String username = auth.username();
+        ChessGame game = gameData.game();
+
+        if (game.isOver()) {
+            sendError(session, "Error: game is over");
+            return;
+        }
+
+        boolean isWhite = username.equals(gameData.whiteUsername());
+        boolean isBlack = username.equals(gameData.blackUsername());
+
+        if (!isWhite && !isBlack) {
+            sendError(session, "Error: observers cannot make moves");
+            return;
+        }
+
+        if (isWhite && game.getTeamTurn() != ChessGame.TeamColor.WHITE) {
+            sendError(session, "Error: it is not your turn");
+            return;
+        }
+
+        if (isBlack && game.getTeamTurn() != ChessGame.TeamColor.BLACK) {
+            sendError(session, "Error: it is not your turn");
+            return;
+        }
+
+        try {
+            game.makeMove(command.move);
+        } catch (InvalidMoveException e) {
+            sendError(session, "Error: invalid move");
+            return;
+        }
+
+        try {
+            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                    gameData.whiteUsername(), gameData.blackUsername(), game));
+        } catch (DataAccessException e) {
+            sendError(session, "Error: " + e.getMessage());
+            return;
+        }
+
+        var loadMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+        loadMessage.game = game;
+        String loadJson = gson.toJson(loadMessage);
+        sendToOne(session, loadMessage);
+        connections.broadcast(command.getGameID(), username, loadJson);
+
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        notification.message = username + " moved " + command.move.toString();
+        connections.broadcast(command.getGameID(), username, gson.toJson(notification));
+
+        if (game.isInCheckmate(ChessGame.TeamColor.WHITE)) {
+            sendNotificationToAll(command.getGameID(), gameData.whiteUsername() + " is in checkmate!");
+            game.setOver(true);
+            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                    gameData.whiteUsername(), gameData.blackUsername(), game));
+        } else if (game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+            sendNotificationToAll(command.getGameID(), gameData.blackUsername() + " is in checkmate!");
+            game.setOver(true);
+            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                    gameData.whiteUsername(), gameData.blackUsername(), game));
+        } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
+            sendNotificationToAll(command.getGameID(), "Stalemate! The game is over.");
+            game.setOver(true);
+            dataAccess.updateGame(new GameData(gameData.gameID(), gameData.gameName(),
+                    gameData.whiteUsername(), gameData.blackUsername(), game));
+        } else if (game.isInCheck(ChessGame.TeamColor.WHITE)) {
+            sendNotificationToAll(command.getGameID(), gameData.whiteUsername() + " is in check!");
+        } else if (game.isInCheck(ChessGame.TeamColor.BLACK)) {
+            sendNotificationToAll(command.getGameID(), gameData.blackUsername() + " is in check!");
+        }
+    }
+
+    private void sendNotificationToAll(int gameID, String message) throws IOException {
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        notification.message = message;
+        String json = gson.toJson(notification);
+        connections.broadcast(gameID, "", json);
     }
 
     private String getRole(GameData game, String username) {
