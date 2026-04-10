@@ -127,7 +127,9 @@ public class GameplayClient {
     }
 
     private void highlight() {
-        if (currentGame == null) return;
+        if (currentGame == null) {
+            return;
+        }
         System.out.print("Piece position (e.g. e2): ");
         String input = scanner.nextLine().trim().toLowerCase();
         ChessPosition pos = parsePosition(input);
@@ -165,17 +167,25 @@ public class GameplayClient {
     }
 
     private ChessPosition parsePosition(String input) {
-        if (input == null || input.length() != 2) return null;
+        if (input == null || input.length() != 2) {
+            return null;
+        }
         int col = input.charAt(0) - 'a' + 1;
         int row = input.charAt(1) - '0';
-        if (col < 1 || col > 8 || row < 1 || row > 8) return null;
+        if (col < 1 || col > 8 || row < 1 || row > 8) {
+            return null;
+        }
         return new ChessPosition(row, col);
     }
 
     private boolean isPromotionMove(ChessPosition start, ChessPosition end) {
-        if (currentGame == null) return false;
+        if (currentGame == null) {
+            return false;
+        }
         ChessPiece piece = currentGame.getBoard().getPiece(start);
-        if (piece == null || piece.getPieceType() != ChessPiece.PieceType.PAWN) return false;
+        if (piece == null || piece.getPieceType() != ChessPiece.PieceType.PAWN) {
+            return false;
+        }
         return (piece.getTeamColor() == ChessGame.TeamColor.WHITE && end.getRow() == 8) ||
                 (piece.getTeamColor() == ChessGame.TeamColor.BLACK && end.getRow() == 1);
     }

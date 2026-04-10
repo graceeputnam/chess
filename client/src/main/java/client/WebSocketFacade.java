@@ -43,11 +43,6 @@ public class WebSocketFacade {
         this.session = session;
     }
 
-    @OnClose
-    public void onClose(Session session, CloseReason reason) {
-        this.session = null;
-    }
-
     public void sendConnect(String authToken, int gameID) throws Exception {
         var command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID);
         session.getBasicRemote().sendText(gson.toJson(command));

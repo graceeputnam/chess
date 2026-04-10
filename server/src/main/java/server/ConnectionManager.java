@@ -32,7 +32,9 @@ public class ConnectionManager {
 
     public void broadcast(int gameID, String excludeUsername, String message) throws IOException {
         Map<String, Session> sessions = gameSessions.get(gameID);
-        if (sessions == null) return;
+        if (sessions == null) {
+            return;
+        }
         for (var entry : sessions.entrySet()) {
             if (!entry.getKey().equals(excludeUsername) && entry.getValue().isOpen()) {
                 entry.getValue().getRemote().sendString(message);

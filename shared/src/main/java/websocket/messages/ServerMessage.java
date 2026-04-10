@@ -25,8 +25,12 @@ public class ServerMessage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ServerMessage that)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ServerMessage that)) {
+            return false;
+        }
         return serverMessageType == that.serverMessageType;
     }
 

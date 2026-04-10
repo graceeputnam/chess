@@ -43,7 +43,9 @@ public class WebSocketHandler {
         }
 
         GameData game = getGame(session, command.getGameID());
-        if (game == null) return;
+        if (game == null) {
+            return;
+        }
 
         String username = auth.username();
         connections.add(command.getGameID(), username, session);
@@ -66,7 +68,9 @@ public class WebSocketHandler {
         }
 
         GameData gameData = getGame(session, command.getGameID());
-        if (gameData == null) return;
+        if (gameData == null) {
+            return;
+        }
 
         String username = auth.username();
         ChessGame game = gameData.game();
@@ -105,8 +109,6 @@ public class WebSocketHandler {
                 game.isInCheckmate(ChessGame.TeamColor.BLACK);
         boolean isStalemate = game.isInStalemate(ChessGame.TeamColor.WHITE) ||
                 game.isInStalemate(ChessGame.TeamColor.BLACK);
-        boolean isCheck = game.isInCheck(ChessGame.TeamColor.WHITE) ||
-                game.isInCheck(ChessGame.TeamColor.BLACK);
 
         if (isCheckmate || isStalemate) {
             game.setOver(true);
@@ -151,7 +153,9 @@ public class WebSocketHandler {
         }
 
         GameData gameData = getGame(session, command.getGameID());
-        if (gameData == null) return;
+        if (gameData == null) {
+            return;
+        }
 
         String username = auth.username();
 
@@ -188,7 +192,9 @@ public class WebSocketHandler {
         }
 
         GameData gameData = getGame(session, command.getGameID());
-        if (gameData == null) return;
+        if (gameData == null) {
+            return;
+        }
 
         String username = auth.username();
         ChessGame game = gameData.game();
@@ -223,8 +229,12 @@ public class WebSocketHandler {
     }
 
     private String getRole(GameData game, String username) {
-        if (username.equals(game.whiteUsername())) return "white";
-        if (username.equals(game.blackUsername())) return "black";
+        if (username.equals(game.whiteUsername())) {
+            return "white";
+        }
+        if (username.equals(game.blackUsername())) {
+            return "black";
+        }
         return "an observer";
     }
 
